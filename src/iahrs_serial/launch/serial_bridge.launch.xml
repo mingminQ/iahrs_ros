@@ -1,0 +1,35 @@
+<!-- serial_bridge.launch.xml -->
+
+<launch>
+
+    <!-- Frame id and topic -->
+    <arg name = "frame_id"             default = "iahrs_imu"            />
+    <arg name = "imu_topic"            default = "/iahrs/imu"           />
+    <arg name = "magnetic_field_topic" default = "/iahrs/magnetic_field"/>
+
+    <!-- Serial port -->
+    <arg name = "port_path" default = "/dev/ttyUSB0"/>
+    <arg name = "baud_rate" default = "115200"      />
+
+    <!-- IMU options -->
+    <arg name = "remove_gravitational_acceleration" default = "false"/>
+    
+    <!-- IAHRS IMU serial driver -->
+    <node pkg = "iahrs_serial" exec = "serial_bridge" name = "iahrs_serial_bridge" output = "screen">
+
+        <!-- Frame id and topic -->
+        <param name = "frame_id"             value = "$(var frame_id)"             />
+        <param name = "imu_topic"            value = "$(var imu_topic)"            />
+        <param name = "magnetic_field_topic" value = "$(var magnetic_field_topic)" />
+
+        <!-- Serial port -->
+        <param name = "port_path" value = "$(var port_path)"/>
+        <param name = "baud_rate" value = "$(var baud_rate)"/>
+
+        <!-- IMU options -->
+        <param name = "remove_gravitational_acceleration" 
+            value = "$(var remove_gravitational_acceleration)"/>
+
+    </node>
+
+</launch>
