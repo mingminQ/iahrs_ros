@@ -39,6 +39,10 @@ using namespace std::chrono_literals;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
+/**
+ * @brief Default class contructor
+ * @details Initializes the base Node with name "iahrs_serial_bridge".
+ */
 iahrs::SerialBridge::SerialBridge()
   : Node("iahrs_serial_bridge")
 {
@@ -46,6 +50,10 @@ iahrs::SerialBridge::SerialBridge()
     initialize_node();
 }
 
+/**
+ * @brief Default class destructor
+ * @details Destroys the Serial node, closing and deallocating the serial port.
+ */
 iahrs::SerialBridge::~SerialBridge()
 {
     if(!serial_port_)
@@ -60,6 +68,11 @@ iahrs::SerialBridge::~SerialBridge()
     }
 }
 
+/**
+ * @brief Pulls one IMU CSV frame, converts to SI, and publishes paired IMU & magnetic-field messages.
+ * @details CSV order: ax, ay, az, gx, gy, gz, mx, my, mz, qw, qx, qy, qz.
+ * Units: g→m/s², deg/s→rad/s, μT→T (1e-7). Single timestamp keeps both topics in lock-step.
+ */
 void iahrs::SerialBridge::timer_callback()
 {
     // Receive packet
@@ -109,6 +122,7 @@ void iahrs::SerialBridge::timer_callback()
     magnetic_field_pub_->publish(magnetic_field_data_);
 }
 
+/** @brief Initializes timers, publishers, service server, and the serial port. */
 void iahrs::SerialBridge::initialize_node()
 {
     // Timers
@@ -166,8 +180,12 @@ void iahrs::SerialBridge::initialize_node()
     // Initialize sensor data
     imu_data_.header.frame_id = frame_id_;
     magnetic_field_data_.header.frame_id = frame_id_;
+    imu_data_.linear_acceleration_covariance = default_acceleration_covariance;
+    imu_data_.angular_velocity_covariance    = default_angular_velocity_covariance;
+    imu_data_.orientation_covariance         = default_orientation_covariance;
 }
 
+/** @brief Declares and retrieves ROS2 parameters for serial and IAHRS configuration. */
 void iahrs::SerialBridge::declare_parameters()
 {
     // Serial port

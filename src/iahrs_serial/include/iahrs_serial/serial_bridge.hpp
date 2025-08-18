@@ -37,22 +37,45 @@
 
 namespace iahrs
 {
+    /**
+     * @brief ROS 2 node that bridges an IMU over a serial link.
+     * @details Opens a serial port, reads CSV IMU frames,
+     *  converts to SI units, and publishes sensor_msgs::msg::Imu and
+     *  sensor_msgs::msg::MagneticField with a shared timestamp.
+     */
     class SerialBridge : public rclcpp::Node
     {
+    // "SerialBridge" member functions
     public:
 
+        /**
+         * @brief Default class contructor
+         * @details Initializes the base Node with name "iahrs_serial_bridge".
+         */
         SerialBridge();
 
+        /**
+         * @brief Default class destructor
+         * @details Destroys the Serial node, closing and deallocating the serial port.
+         */
         ~SerialBridge();
 
     private:
 
+        /**
+         * @brief Pulls one IMU CSV frame, converts to SI, and publishes paired IMU & magnetic-field messages.
+         * @details CSV order: ax, ay, az, gx, gy, gz, mx, my, mz, qw, qx, qy, qz.
+         * Units: g→m/s², deg/s→rad/s, μT→T (1e-7). Single timestamp keeps both topics in lock-step.
+         */
         void timer_callback();
 
+        /** @brief Initializes timers, publishers, service server, and the serial port. */
         void initialize_node();
 
+        /** @brief Declares and retrieves ROS2 parameters for serial and IAHRS configuration. */
         void declare_parameters();
 
+    // "SerialBridge" member variables
     private:
 
         // Serial port
