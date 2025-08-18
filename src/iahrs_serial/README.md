@@ -7,7 +7,7 @@ Publishes linear acceleration /  angualar velocity / orientation / magnetic fiel
 ### Unit
 | Data | Unit |
 |---|---|
-| Linear Acceleration | **$m/s^2$** |
+| Linear Acceleration | **m/s^2** |
 | Angular Velocity| **rad/s** |
 | Orientation | **Quaternion** |
 | Magnetic Field | **T** |
