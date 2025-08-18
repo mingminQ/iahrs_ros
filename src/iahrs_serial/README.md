@@ -2,7 +2,8 @@
 iAHRS RB-SDA-v1 serial communication package
 
 ## serial_bridge
-Publishes linear acceleration /  angualar velocity / orientation / magnetic field data.  
+Publishes linear acceleration /  angualar velocity / orientation / magnetic field data with 100Hz publication rate.  
+It uses data received asynchronously from sensors.  
 Please enter one of the two commands to execute.  
 
 ``` console
@@ -13,33 +14,37 @@ $ ros2 launch iahrs_serial serial_bridge.launch.xml
 ```
 
 ### Unit
-| Data | Unit |
-|---|---|
-| Linear Acceleration | **m/s^2** |
-| Angular Velocity| **rad/s** |
-| Orientation | **Quaternion** |
-| Magnetic Field | **T** |
+It does not mean the unit received from the sensor, but the unit converted by **serial_bridge** and finally published.  
+| Data                | Unit           |
+| ------------------- | -------------- |
+| Linear Acceleration | **m/s^2**      |
+| Angular Velocity    | **rad/s**      |
+| Orientation         | **Quaternion** |
+| Magnetic Field      | **T**          |
 
 ### Topic / Service Names
-| Communication Interface | Communication Entities | Interface Name | Description |
-|---|---|---|---|
-| [Topic] **sensor_msgs/msg/Imu** | Publisher | **/iahrs/imu** | IMU sensor data includes linear acceleration, angular velocity, orientation |
-|  [Topic] **sensor_msgs/msg/MagneticField** | Publisher | **/iahrs/magnetic_field** | Magnetic field data, If magnetic field calibration is required, it must be set at the firmware level. |
+| Interface | Entitiy   | Type                              | Name                                  | Description                                                                                           |
+| --------- | --------- | --------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Topic     | Publisher | **sensor_msgs/msg/Imu**           | **/iahrs/imu**(changeable)            | IMU sensor data includes linear acceleration, angular velocity, orientation.                          |
+| Topic     | Publisher | **sensor_msgs/msg/MagneticField** | **/iahrs/magnetic_field**(changeable) | Magnetic field data, If magnetic field calibration is required, it must be set at the firmware level. |
 
 ### QoS
-| QoS Policy | QoS Policy Key |
-|---|---|
-| History | **Keep Last** |
-| Depth | **1** |
+| QoS Policy  | QoS Policy Key  |
+| ----------- | --------------- |
+| History     | **Keep Last**   |
+| Depth       | **1**           |
 | Reliability | **Best Effort** |
-| Durability | **Volatile** |
+| Durability  | **Volatile**    |
 
 ### Parameters
-| Parameter Name | Unit | Description |
-|---|---|---|
-| frame_id | - |  |
-| imu_topic | - |  |
-| magnetic_field_topic | - |  |
-| port_path | - |  |
-| baud_rate | - |  |
-| remove_gravitational_acceleration | **bool** |  |
+| Parameter Name                    | Unit     | Description                                                                                 |
+| --------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| frame_id                          | -        | Frame ID of IMU data and magnetic field data.                                               |
+| imu_topic                         | -        | IMU data publication topic name.                                                            |
+| magnetic_field_topic              | -        | Magnetic field publication topic name.                                                      |
+| port_path                         | -        | Serial port path. ( e.g. /dev/ttyUSB0 )                                                     |
+| baud_rate                         | -        | Serial communication speed. only 115200 or 9600 can be selected. But 115200 is recommended. |
+| remove_gravitational_acceleration | **bool** | If True, publishes data with gravitational acceleration removed from linear acceleration.   |
+
+## interactive_bridge
+...
