@@ -7,13 +7,15 @@ Please enter one of the two commands to execute.
 
 ``` console
 $ ros2 launch iahrs_serial serial_bridge.launch.py
+```
+``` console
 $ ros2 launch iahrs_serial serial_bridge.launch.xml
 ```
 
 ### Unit
 | Data | Unit |
 |---|---|
-| Linear Acceleration | **$m/s^2$** |
+| Linear Acceleration | **m/s^2** |
 | Angular Velocity| **rad/s** |
 | Orientation | **Quaternion** |
 | Magnetic Field | **T** |
