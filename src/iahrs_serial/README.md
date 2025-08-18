@@ -2,12 +2,18 @@
 iAHRS RB-SDA-v1 serial communication package
 
 ## serial_bridge
-Publishes linear acceleration /  angualar velocity / orientation / magnetic field data
+Publishes linear acceleration /  angualar velocity / orientation / magnetic field data.  
+Please enter one of the two commands to execute.  
+
+``` console
+$ ros2 launch iahrs_serial serial_bridge.launch.py
+$ ros2 launch iahrs_serial serial_bridge.launch.xml
+```
 
 ### Unit
 | Data | Unit |
 |---|---|
-| Linear Acceleration | **m/s^2** |
+| Linear Acceleration | **$m/s^2$** |
 | Angular Velocity| **rad/s** |
 | Orientation | **Quaternion** |
 | Magnetic Field | **T** |
@@ -29,3 +35,6 @@ Publishes linear acceleration /  angualar velocity / orientation / magnetic fiel
 ### Parameters
 | Parameter Name | Unit | Description |
 |---|---|---|
+| frame_id | - |  |
+| imu_topic | - |  |
+| magnetic_field_topic | - |  |
