@@ -42,4 +42,4 @@ $ ros2 launch iahrs_serial serial_bridge.launch.xml
 | magnetic_field_topic | - |  |
 | port_path | - |  |
 | baud_rate | - |  |
-| remove_gravitational_acceleration | bool |  |
+| remove_gravitational_acceleration | **bool** |  |
