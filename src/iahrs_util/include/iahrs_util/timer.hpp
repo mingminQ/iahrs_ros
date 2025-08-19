@@ -80,6 +80,4 @@ namespace iahrs
 
 } // namespace iahrs
 
-
-
 #endif // IAHRS_UTIL_TIMER_HPP_
