@@ -5,7 +5,7 @@ iAHRS RB-SDA-v1 serial communication package
 Publishes linear acceleration /  angualar velocity / orientation / magnetic field data with 100Hz publication rate.  
 It uses data received asynchronously from sensors. 
 
-### How to launch
+### How to execute
 Please enter one of the two commands to execute.  
 
 ``` bash
