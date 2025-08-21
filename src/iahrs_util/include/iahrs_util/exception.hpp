@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * @file    exception.cpp
+ * @file    exception.hpp
  * @brief   Exception class for IAHRS RB-SDA-v1
  * @author  Minkyu Kil
  * @date    2025-06-17
@@ -24,8 +24,8 @@
  * -------------------------------------------------------------------------------------------------
  */
 
-#ifndef IAHRS_UTIL_ECXEPTION_H_
-#define IAHRS_UTIL_ECXEPTION_H_
+#ifndef IAHRS_UTIL_ECXEPTION_HPP_
+#define IAHRS_UTIL_ECXEPTION_HPP_
 
 #include <stdexcept>
 #include <string>
@@ -57,4 +57,4 @@ namespace iahrs
 
 } // namespace iahrs
 
-#endif // IAHRS_UTIL_ECXEPTION_H_
+#endif // IAHRS_UTIL_ECXEPTION_HPP_
