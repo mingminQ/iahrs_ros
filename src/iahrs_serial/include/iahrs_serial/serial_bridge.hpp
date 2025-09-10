@@ -28,6 +28,8 @@
 #define IAHRS_SERIAL_SERIAL_BRIDGE_HPP_
 
 #include "iahrs_serial/serial_port.hpp"
+#include "iahrs_msgs/srv/initialize_orientation.hpp"
+#include "iahrs_msgs/srv/set_orientation_zero.hpp"
 
 #include "sensor_msgs/msg/magnetic_field.hpp"
 #include "sensor_msgs/msg/imu.hpp"
@@ -63,11 +65,34 @@ namespace iahrs
     private:
 
         /**
-         * @brief Pulls one IMU CSV frame, converts to SI, and publishes paired IMU & magnetic-field messages.
-         * @details CSV order: ax, ay, az, gx, gy, gz, mx, my, mz, qw, qx, qy, qz.
-         * Units: g→m/s², deg/s→rad/s, μT→T (1e-7). Single timestamp keeps both topics in lock-step.
+         * @brief Timer callback that receives one synchronous CSV frame from the sensor,
+         * parses numeric fields into SI units, and publishes IMU & MagneticField.
+         * @details Input CSV layout
+         * - Unit conversion:
+         *   Accel (g)      → m/s² : * GRAVITATIONAL_ACCELERATION
+         *   Gyro  (deg/s)  → rad/s: * DEG2RAD
+         *   Magn. (µT)     → T    : * 1e-6
+         *   Euler (deg)    → rad  : * DEG2RAD (for quaternion conversion)
          */
         void timer_callback();
+
+        /**
+         * @brief Service callback to initialize the orientation of the IMU.
+         * @param request Service request (not used in this implementation).
+         * @param response Service response containing the result of the operation.
+         */
+        void initialize_orientation_callback(
+            const std::shared_ptr<iahrs_msgs::srv::InitializeOrientation::Request> /*request*/,
+            std::shared_ptr<iahrs_msgs::srv::InitializeOrientation::Response> response);
+
+        /**
+         * @brief Service callback to set the current orientation as zero reference.
+         * @param request Service request (not used in this implementation).
+         * @param response Service response containing the result of the operation.
+         */
+        void set_orientation_zero_callback(
+            const std::shared_ptr<iahrs_msgs::srv::SetOrientationZero::Request> /*request*/,
+            std::shared_ptr<iahrs_msgs::srv::SetOrientationZero::Response> response);
 
         /** @brief Initializes timers, publishers, service server, and the serial port. */
         void initialize_node();
@@ -90,6 +115,10 @@ namespace iahrs
         rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
         rclcpp::Publisher<sensor_msgs::msg::MagneticField>::SharedPtr magnetic_field_pub_;
 
+        // Services
+        rclcpp::Service<iahrs_msgs::srv::InitializeOrientation>::SharedPtr initialize_orientation_srv_;
+        rclcpp::Service<iahrs_msgs::srv::SetOrientationZero>::SharedPtr set_orientation_zero_srv_;
+
         // Sensor data
         sensor_msgs::msg::Imu imu_data_;
         sensor_msgs::msg::MagneticField magnetic_field_data_;
@@ -101,6 +130,11 @@ namespace iahrs
 
         // Parameters
         bool remove_gravitational_acceleration_;
+
+        // Orientation offset
+        double roll_offset_deg_;
+        double pitch_offset_deg_;
+        double yaw_offset_deg_;
         
     }; // class SerialBridge
 

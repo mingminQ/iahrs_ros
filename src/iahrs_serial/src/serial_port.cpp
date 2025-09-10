@@ -59,18 +59,18 @@ void iahrs::SerialPort::open_port()
     if(port_path_.empty())
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::open_port() port path is empty");
+        throw Exception("SerialPort::open_port() Port path is empty.");
     }
 
     file_descriptor_ = open(port_path_.c_str(), O_RDWR | O_NOCTTY);
     if(file_descriptor_ == -1)
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::open_port() file descriptor opening error");
+        throw Exception("SerialPort::open_port() File descriptor opening error.");
     }
 
     this->initialize_port();
-    IAHRS_INFO("SerialPort::open_port() serial port %s has been opened successfully",
+    IAHRS_INFO("SerialPort::open_port() Serial port %s has been opened successfully.",
         port_path_.c_str());
 }
 
@@ -84,17 +84,17 @@ void iahrs::SerialPort::close_port()
     if (file_descriptor_ < 0) 
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::close_port() invalid file descriptor");
+        throw Exception("SerialPort::close_port() Invalid file descriptor.");
     }
 
     if (close(file_descriptor_) != 0) 
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::close_port() failed to close file descriptor");
+        throw Exception("SerialPort::close_port() Failed to close file descriptor.");
     }
 
     file_descriptor_ = -1;
-    IAHRS_INFO("SerialPort::close_port() serial port %s has been closed successfully",
+    IAHRS_INFO("SerialPort::close_port() Serial port %s has been closed successfully.",
         port_path_.c_str());
 }
 
@@ -119,7 +119,7 @@ bool iahrs::SerialPort::receive_packet(char *rx_packet, unsigned int &packet_siz
     {
         if(recommended_response_time < std::chrono::steady_clock::now())
         {
-            IAHRS_ERROR("SerialPort::request_data() serial read is too slow, response time is over 30ms");
+            IAHRS_WARN("SerialPort::request_data() Serial read is too slow, response time is over 30ms.");
             return false;
         }
 
@@ -132,7 +132,7 @@ bool iahrs::SerialPort::receive_packet(char *rx_packet, unsigned int &packet_siz
         }
         else if(reveived_packet_size < 0)
         {
-            IAHRS_ERROR("SerialPort::request_data() serial read error");
+            IAHRS_ERROR("SerialPort::request_data() Serial read error.");
             return false;
         }
         else
@@ -155,14 +155,14 @@ bool iahrs::SerialPort::transmit_packet(const char *tx_packet,
 {
     if(file_descriptor_ < 0)
     {
-        IAHRS_ERROR("SerialPort::transmit_packet() port is not opened");
+        IAHRS_ERROR("SerialPort::transmit_packet() Port is not opened.");
         return false;
     }
 
     ssize_t transmitted_packet_size = write(file_descriptor_, tx_packet, expected_packet_size);
     if(transmitted_packet_size < expected_packet_size)
     {
-        IAHRS_ERROR("SerialPort::transmit_packet() expected size is %d, but transmitted size is %zd",
+        IAHRS_ERROR("SerialPort::transmit_packet() Expected size is %d, but transmitted size is %zd.",
             expected_packet_size, transmitted_packet_size);
         return false;
     }
@@ -183,7 +183,7 @@ void iahrs::SerialPort::initialize_port()
     if(tcgetattr(file_descriptor_, &tty) != 0)
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::initialize_port() tcgetattr failed");
+        throw Exception("SerialPort::initialize_port() tcgetattr failed.");
     }
 
     cfmakeraw(&tty);
@@ -204,7 +204,7 @@ void iahrs::SerialPort::initialize_port()
 
     default:
         file_descriptor_ = -1;
-        throw Exception("SerialPort::initialize_port() invalid baud_rate, use 9600 or 115200");
+        throw Exception("SerialPort::initialize_port() Invalid baud_rate, use 9600 or 115200.");
     }
 
     tty.c_cc[VMIN]  = 0;
@@ -213,6 +213,6 @@ void iahrs::SerialPort::initialize_port()
     if((tcsetattr(file_descriptor_, TCSAFLUSH, &tty)) != 0)
     {
         file_descriptor_ = -1;
-        throw Exception("SerialPort::initialize_port() tcsetattr failed");
+        throw Exception("SerialPort::initialize_port() tcsetattr failed.");
     }
 }

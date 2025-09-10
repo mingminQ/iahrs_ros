@@ -58,7 +58,7 @@ void iahrs::Timer::end()
 {
     if(!starting_time_set_)
     {
-        IAHRS_ERROR("Timer::end() starting time is not set, call Timer::start() first");
+        IAHRS_ERROR("Timer::end() Starting time is not set, call Timer::start() first.");
         return;
     }
 
@@ -66,6 +66,6 @@ void iahrs::Timer::end()
     auto elapsed_time_us  = duration_cast<microseconds>(current_time - starting_time_).count();
     double elapsed_time_s = static_cast<double>(elapsed_time_us) * 1e-6;
 
-    IAHRS_INFO("Timer::end() elapsed time is %lf sec", elapsed_time_s);
+    IAHRS_INFO("Timer::end() Elapsed time is %lf sec.", elapsed_time_s);
     starting_time_set_ = false;
 }

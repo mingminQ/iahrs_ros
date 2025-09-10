@@ -19,6 +19,11 @@ def generate_launch_description():
     # IMU options
     remove_gravitational_acceleration = DeclareLaunchArgument('remove_gravitational_acceleration', 
         default_value = 'false', description = 'Remove gravity acceleration at linear acceleration')
+    
+    # Orientation offset
+    roll_offset_deg  = DeclareLaunchArgument('roll_offset_deg' , default_value = '0.0', description = 'Roll offset in degrees' )
+    pitch_offset_deg = DeclareLaunchArgument('pitch_offset_deg', default_value = '0.0', description = 'Pitch offset in degrees')
+    yaw_offset_deg   = DeclareLaunchArgument('yaw_offset_deg'  , default_value = '0.0', description = 'Yaw offset in degrees'  )
 
     # IAHRS IMU serial driver
     serial_bridge = Node(package = 'iahrs_serial', executable = 'serial_bridge', name = 'iahrs_serial_bridge', output = 'screen',
@@ -28,7 +33,10 @@ def generate_launch_description():
             'magnetic_field_topic'             : LaunchConfiguration('magnetic_field_topic'),
             'port_path'                        : LaunchConfiguration('port_path'),
             'baud_rate'                        : LaunchConfiguration('baud_rate'),
-            'remove_gravitational_acceleration': LaunchConfiguration('remove_gravitational_acceleration')
+            'remove_gravitational_acceleration': LaunchConfiguration('remove_gravitational_acceleration'),
+            'roll_offset_deg'                  : LaunchConfiguration('roll_offset_deg' ),
+            'pitch_offset_deg'                 : LaunchConfiguration('pitch_offset_deg'),
+            'yaw_offset_deg'                   : LaunchConfiguration('yaw_offset_deg'  )
         }]
     )
 
@@ -39,5 +47,8 @@ def generate_launch_description():
         port_path,
         baud_rate,
         remove_gravitational_acceleration,
+        roll_offset_deg,
+        pitch_offset_deg,
+        yaw_offset_deg,
         serial_bridge
     ])

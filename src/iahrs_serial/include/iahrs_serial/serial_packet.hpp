@@ -50,14 +50,13 @@ namespace iahrs
         MAGNET_Y = 7,
         MAGNET_Z = 8,
 
-        // Quaternion orientation
-        QUAT_W = 9,
-        QUAT_X = 10,
-        QUAT_Y = 11,
-        QUAT_Z = 12,
+        // Euler RPY orientation
+        ROLL  = 9,
+        PITCH = 10,
+        YAW   = 11,
 
         // Packet size
-        PACKET_SIZE = 13
+        PACKET_SIZE
 
     }; // enum Packet
 

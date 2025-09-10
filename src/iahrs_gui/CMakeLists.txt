@@ -3,7 +3,7 @@
 # Copyright (c) 2025 Minkyu Kil
 # --------------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.8)
-project(iahrs_serial)
+project(iahrs_gui)
 
 # --------------------------------------------------------------------------------------------------
 # Ensure C++17 standard is used if not already set
@@ -20,15 +20,24 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # --------------------------------------------------------------------------------------------------
+# Enable Qt auto-processing and set UIC
+# --------------------------------------------------------------------------------------------------
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/ui)
+
+# --------------------------------------------------------------------------------------------------
 # Find required ROS2 and message packages
 # --------------------------------------------------------------------------------------------------
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(iahrs_msgs REQUIRED)
 find_package(iahrs_util REQUIRED)
+find_package(iahrs_msgs REQUIRED)
 find_package(tf2 REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
 
 # --------------------------------------------------------------------------------------------------
 # Include local header files
@@ -38,70 +47,41 @@ include_directories(
 )
 
 # --------------------------------------------------------------------------------------------------
-# IAHRS serial port library
+# IAHRS sensor monitor
 # --------------------------------------------------------------------------------------------------
-add_library(${PROJECT_NAME}
-    src/serial_port.cpp
+set(IAHRS_SENSOR_MONITOR_SOURCE
+    include/iahrs_gui/sensor_monitor.hpp
+    src/sensor_monitor.cpp
+    ui/sensor_monitor.ui
 )
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
+add_executable(sensor_monitor
+    node/sensor_monitor_node.cpp
+    ${IAHRS_SENSOR_MONITOR_SOURCE}
 )
 
-ament_target_dependencies(${PROJECT_NAME}
-    iahrs_util
-)
-
-install(
-    TARGETS ${PROJECT_NAME}
-    EXPORT export_${PROJECT_NAME}
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin
-)
-
-install(
-    DIRECTORY include/
-    DESTINATION include
-)
-
-# --------------------------------------------------------------------------------------------------
-# IAHRS serial driver
-# --------------------------------------------------------------------------------------------------
-add_executable(serial_bridge
-    node/serial_bridge_node.cpp
-    src/serial_bridge.cpp
-    src/serial_port.cpp
-)
-
-ament_target_dependencies(serial_bridge
+ament_target_dependencies(sensor_monitor
     rclcpp
     sensor_msgs
-    iahrs_msgs
     iahrs_util
+    iahrs_msgs
     tf2
-    tf2_geometry_msgs
 )
 
-target_include_directories(serial_bridge 
+target_include_directories(sensor_monitor
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
 
-install(
-    TARGETS serial_bridge
-    DESTINATION lib/${PROJECT_NAME}
+target_link_libraries(sensor_monitor
+    Qt5::Core
+    Qt5::Widgets
 )
 
-# --------------------------------------------------------------------------------------------------
-# Install launch files
-# --------------------------------------------------------------------------------------------------
 install(
-    DIRECTORY launch
-    DESTINATION share/${PROJECT_NAME}
+    TARGETS sensor_monitor
+    DESTINATION lib/${PROJECT_NAME}
 )
 
 # --------------------------------------------------------------------------------------------------

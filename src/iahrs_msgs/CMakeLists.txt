@@ -30,8 +30,11 @@ find_package(rosidl_default_generators REQUIRED)
 # --------------------------------------------------------------------------------------------------
 # Generate ROS2 message interfaces
 # --------------------------------------------------------------------------------------------------
-rosidl_generate_interfaces(${PROJECT_NAME}
-    "srv/ResetOrientation.srv"
+rosidl_generate_interfaces(
+    
+    ${PROJECT_NAME}
+        "srv/InitializeOrientation.srv"
+        "srv/SetOrientationZero.srv"
 
     DEPENDENCIES
         builtin_interfaces 

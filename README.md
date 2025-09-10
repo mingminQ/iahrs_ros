@@ -16,7 +16,13 @@ For more information about the package, please read the README.md at the link be
 - **iAHRS IMU ROS2 serial driver :** [iahrs_serial](https://github.com/mingminQ/iahrs_ros/tree/humble/src/iahrs_serial)
 
 # Requirements
-- ROS2 Humble
+- Ubuntu 22.04
+- [ROS2 Humble](https://docs.ros.org/en/humble/Installation.html)
+- Rviz Pugins
+
+```bash
+$ sudo apt-get install ros-humble-rviz-imu-plugin
+```
 
 # TODO
 - iAHRS RB-SDA-v1 Firmware GUI

@@ -14,6 +14,11 @@
     <!-- IMU options -->
     <arg name = "remove_gravitational_acceleration" default = "false"/>
     
+    <!-- Orientation offset -->
+    <arg name = "roll_offset_deg"  default = "0.0"/>
+    <arg name = "pitch_offset_deg" default = "0.0"/>
+    <arg name = "yaw_offset_deg"   default = "0.0"/>
+
     <!-- IAHRS IMU serial driver -->
     <node pkg = "iahrs_serial" exec = "serial_bridge" name = "iahrs_serial_bridge" output = "screen">
 
@@ -27,8 +32,12 @@
         <param name = "baud_rate" value = "$(var baud_rate)"/>
 
         <!-- IMU options -->
-        <param name = "remove_gravitational_acceleration" 
-            value = "$(var remove_gravitational_acceleration)"/>
+        <param name = "remove_gravitational_acceleration" value = "$(var remove_gravitational_acceleration)"/>
+
+        <!-- Orientation offset -->
+        <param name = "roll_offset_deg"  value = "$(var roll_offset_deg)" />
+        <param name = "pitch_offset_deg" value = "$(var pitch_offset_deg)"/>
+        <param name = "yaw_offset_deg"   value = "$(var yaw_offset_deg)"  />
 
     </node>
 

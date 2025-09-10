@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     try
     {
         std::shared_ptr<iahrs::SerialBridge>node = std::make_shared<iahrs::SerialBridge>();
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
         rclcpp::spin(node);
     }
     catch(const std::exception& ex)

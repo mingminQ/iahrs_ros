@@ -47,6 +47,9 @@ It does not mean the unit received from the sensor, but the unit converted by **
 | port_path                         | -        | Serial port path. ( e.g. /dev/ttyUSB0 )                                                     |
 | baud_rate                         | -        | Serial communication speed. only 115200 or 9600 can be selected. But 115200 is recommended. |
 | remove_gravitational_acceleration | **bool** | If True, publishes data with gravitational acceleration removed from linear acceleration.   |
+| roll_offset_deg                   | **deg**  | |
+| pitch_offset_deg                  | **deg**  | |
+| yaw_offset_deg                    | **deg**  | |
 
 ## interactive_bridge
 ...

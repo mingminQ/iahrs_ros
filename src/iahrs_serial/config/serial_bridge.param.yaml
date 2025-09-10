@@ -1,0 +1,19 @@
+iahrs_serial_bridge:
+  ros_parameters:
+
+  # Serial port settings
+  port_path: "/dev/ttyUSB0"
+  baud_rate: 115200
+
+  # Frame ID and topics
+  frame_id            : "iahrs_imu"
+  imu_topic           : "/iahrs/imu"
+  magnetic_field_topic: "/iahrs/magnetic_field"
+
+  # Options
+  remove_gravitional_acceleration: false
+
+  # Offsets
+  roll_offset_deg : 0.0 # deg
+  pitch_offset_deg: 0.0 # deg
+  yaw_offset_deg  : 0.0 # deg

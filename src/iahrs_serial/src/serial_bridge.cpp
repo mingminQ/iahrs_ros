@@ -30,17 +30,23 @@
 #include "iahrs_util/exception.hpp"
 #include "iahrs_util/log.hpp"
 
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2/LinearMath/Quaternion.hpp"
+
 #include <functional>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 
+// using chrono literals
 using namespace std::chrono_literals;
+
+// placeholders for std::bind
 using std::placeholders::_1;
 using std::placeholders::_2;
 
 /**
- * @brief Default class contructor
+ * @brief Default class constructor
  * @details Initializes the base Node with name "iahrs_serial_bridge".
  */
 iahrs::SerialBridge::SerialBridge()
@@ -58,7 +64,7 @@ iahrs::SerialBridge::~SerialBridge()
 {
     if(!serial_port_)
     {
-        IAHRS_ERROR("InteractiveBridge::~InteractiveBridge() %s is deallocated already",
+        IAHRS_ERROR("SerialBridge::~SerialBridge() %s is deallocated already",
             port_path_.c_str());
     }
     else
@@ -69,9 +75,14 @@ iahrs::SerialBridge::~SerialBridge()
 }
 
 /**
- * @brief Pulls one IMU CSV frame, converts to SI, and publishes paired IMU & magnetic-field messages.
- * @details CSV order: ax, ay, az, gx, gy, gz, mx, my, mz, qw, qx, qy, qz.
- * Units: g→m/s², deg/s→rad/s, μT→T (1e-7). Single timestamp keeps both topics in lock-step.
+ * @brief Timer callback that receives one synchronous CSV frame from the sensor,
+ * parses numeric fields into SI units, and publishes IMU & MagneticField.
+ * @details Input CSV layout
+ * - Unit conversion:
+ *   Accel (g)      → m/s² : * GRAVITATIONAL_ACCELERATION
+ *   Gyro  (deg/s)  → rad/s: * DEG2RAD
+ *   Magn. (µT)     → T    : * 1e-6
+ *   Euler (deg)    → rad  : * DEG2RAD (for quaternion conversion)
  */
 void iahrs::SerialBridge::timer_callback()
 {
@@ -85,18 +96,42 @@ void iahrs::SerialBridge::timer_callback()
 
     // Parse packet
     double data[PACKET_SIZE];
-    std::sscanf(packet,
-        "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
-        &data[ACCEL_X] , &data[ACCEL_Y] , &data[ACCEL_Z] ,
-        &data[GYRO_X]  , &data[GYRO_Y]  , &data[GYRO_Z]  ,
-        &data[MAGNET_X], &data[MAGNET_Y], &data[MAGNET_Z],
-        &data[QUAT_W]  , &data[QUAT_X]  , &data[QUAT_Y]  , &data[QUAT_Z]
-    );
+    
+    // gravity removed acceleration
+    if(remove_gravitational_acceleration_)
+    {
+        std::sscanf(packet,
+            "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+            &data[GYRO_X]  , &data[GYRO_Y]  , &data[GYRO_Z]  ,
+            &data[MAGNET_X], &data[MAGNET_Y], &data[MAGNET_Z],
+            &data[ACCEL_X] , &data[ACCEL_Y] , &data[ACCEL_Z] ,
+            &data[ROLL]    , &data[PITCH]   , &data[YAW]
+        );
+    }
+    else
+    {
+        std::sscanf(packet,
+            "%lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf",
+            &data[ACCEL_X] , &data[ACCEL_Y] , &data[ACCEL_Z] ,
+            &data[GYRO_X]  , &data[GYRO_Y]  , &data[GYRO_Z]  ,
+            &data[MAGNET_X], &data[MAGNET_Y], &data[MAGNET_Z],
+            &data[ROLL]    , &data[PITCH]   , &data[YAW]
+        );
+    }
 
     // Acceleration
-    imu_data_.linear_acceleration.x = data[ACCEL_X] * GRAVITATIONAL_ACCELERATION;
-    imu_data_.linear_acceleration.y = data[ACCEL_Y] * GRAVITATIONAL_ACCELERATION;
-    imu_data_.linear_acceleration.z = data[ACCEL_Z] * GRAVITATIONAL_ACCELERATION;
+    if(remove_gravitational_acceleration_)
+    {
+        imu_data_.linear_acceleration.x = data[ACCEL_X];
+        imu_data_.linear_acceleration.y = data[ACCEL_Y];
+        imu_data_.linear_acceleration.z = data[ACCEL_Z];
+    }
+    else
+    {
+        imu_data_.linear_acceleration.x = data[ACCEL_X] * GRAVITATIONAL_ACCELERATION;
+        imu_data_.linear_acceleration.y = data[ACCEL_Y] * GRAVITATIONAL_ACCELERATION;
+        imu_data_.linear_acceleration.z = data[ACCEL_Z] * GRAVITATIONAL_ACCELERATION;
+    }
 
     // Angular velocity
     imu_data_.angular_velocity.x = data[GYRO_X] * DEG2RAD;
@@ -104,15 +139,18 @@ void iahrs::SerialBridge::timer_callback()
     imu_data_.angular_velocity.z = data[GYRO_Z] * DEG2RAD;
 
     // Magnetic field
-    magnetic_field_data_.magnetic_field.x = data[MAGNET_X] * 1e-7;
-    magnetic_field_data_.magnetic_field.y = data[MAGNET_Y] * 1e-7;
-    magnetic_field_data_.magnetic_field.z = data[MAGNET_Z] * 1e-7;
+    magnetic_field_data_.magnetic_field.x = data[MAGNET_X] * 1e-6;
+    magnetic_field_data_.magnetic_field.y = data[MAGNET_Y] * 1e-6;
+    magnetic_field_data_.magnetic_field.z = data[MAGNET_Z] * 1e-6;
 
-    // Quaternion orientation
-    imu_data_.orientation.w = data[QUAT_W];
-    imu_data_.orientation.x = data[QUAT_X];
-    imu_data_.orientation.y = data[QUAT_Y];
-    imu_data_.orientation.z = data[QUAT_Z];
+    // Orientation
+    double roll_rad  = (data[ROLL]  + roll_offset_deg_ ) * DEG2RAD;
+    double pitch_rad = (data[PITCH] + pitch_offset_deg_) * DEG2RAD;
+    double yaw_rad   = (data[YAW]   + yaw_offset_deg_  ) * DEG2RAD;
+
+    tf2::Quaternion quaternion;
+    quaternion.setRPY(roll_rad, pitch_rad, yaw_rad);
+    tf2::convert(quaternion, imu_data_.orientation);
 
     // Publish data
     imu_data_.header.stamp = this->now();
@@ -120,6 +158,40 @@ void iahrs::SerialBridge::timer_callback()
 
     imu_pub_->publish(imu_data_);
     magnetic_field_pub_->publish(magnetic_field_data_);
+}
+
+/**
+ * @brief Service callback to initialize the orientation of the IMU.
+ * @param request Service request (not used in this implementation).
+ * @param response Service response containing the result of the operation.
+ */
+void iahrs::SerialBridge::initialize_orientation_callback(
+    const std::shared_ptr<iahrs_msgs::srv::InitializeOrientation::Request> /*request*/,
+    std::shared_ptr<iahrs_msgs::srv::InitializeOrientation::Response> response)
+{
+    char tmp_packet[1024];
+    unsigned int tmp_packet_size;
+    serial_port_->transmit_packet("ra\n", strlen("ra\n"));
+    serial_port_->receive_packet(tmp_packet, tmp_packet_size);
+    response->result = true;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+}
+
+/**
+ * @brief Service callback to set the current orientation as zero reference.
+ * @param request Service request (not used in this implementation).
+ * @param response Service response containing the result of the operation.
+ */
+void iahrs::SerialBridge::set_orientation_zero_callback(
+    const std::shared_ptr<iahrs_msgs::srv::SetOrientationZero::Request> /*request*/,
+    std::shared_ptr<iahrs_msgs::srv::SetOrientationZero::Response> response)
+{
+    char tmp_packet[1024];
+    unsigned int tmp_packet_size;
+    serial_port_->transmit_packet("za\n", strlen("za\n"));
+    serial_port_->receive_packet(tmp_packet, tmp_packet_size);
+    response->result = true;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
 /** @brief Initializes timers, publishers, service server, and the serial port. */
@@ -137,11 +209,22 @@ void iahrs::SerialBridge::initialize_node()
         rclcpp::QoS(rclcpp::KeepLast(1)).best_effort().durability_volatile()
     );
 
+    // Services
+    initialize_orientation_srv_ = this->create_service<iahrs_msgs::srv::InitializeOrientation>(
+        "/iahrs/initialize_orientation",
+        std::bind(&SerialBridge::initialize_orientation_callback, this, _1, _2)
+    );
+
+    set_orientation_zero_srv_ = this->create_service<iahrs_msgs::srv::SetOrientationZero>(
+        "/iahrs/set_orientation_zero",
+        std::bind(&SerialBridge::set_orientation_zero_callback, this, _1, _2)
+    );
+
     // Serial port
     serial_port_ = std::make_unique<SerialPort>(port_path_, baud_rate_);
     if(!serial_port_)
     {
-        throw Exception("SerialBridge::initialize_node() serial port allocation failed");
+        throw Exception("SerialBridge::initialize_node() Serial port allocation failed.");
     }
     else
     {
@@ -161,25 +244,26 @@ void iahrs::SerialBridge::initialize_node()
 
     if(remove_gravitational_acceleration_)
     {
-        // 0x00B8 = 0x0020 | 0x0008 | 0x0010 | 0x0080
-        sync_settings_result = sync_settings_result && serial_port_->transmit_packet("sd=0x00B8\n", strlen("sd=0x00B8\n"));
+        // 0x0078 = 0x0008 | 0x0010 | 0x0020 | 0x0040 (gyro, mag, gravity removed acceleration, rpy)
+        sync_settings_result = sync_settings_result && serial_port_->transmit_packet("sd=0x0078\n", strlen("sd=0x0078\n"));
         serial_port_->receive_packet(tmp_packet, tmp_packet_size);
     }
     else
     {
-        // 0x009C = 0x0004 | 0x0008 | 0x0010 | 0x0080
-        sync_settings_result = sync_settings_result && serial_port_->transmit_packet("sd=0x009C\n", strlen("sd=0x009C\n"));
+        // 0x005C = 0x0004 | 0x0008 | 0x0010 | 0x0040 (accel, gyro, mag, rpy)
+        sync_settings_result = sync_settings_result && serial_port_->transmit_packet("sd=0x005C\n", strlen("sd=0x005C\n"));
         serial_port_->receive_packet(tmp_packet, tmp_packet_size);
     }
 
     if(!sync_settings_result)
     {
-        throw Exception("SerialBridge::initialize_node() failed to set sync data");
+        throw Exception("SerialBridge::initialize_node() Failed to set sync data.");
     }
+    IAHRS_INFO("SerialBridge::initialize_node() Sync data set successfully.");
 
     // Initialize sensor data
-    imu_data_.header.frame_id = frame_id_;
-    magnetic_field_data_.header.frame_id = frame_id_;
+    imu_data_.header.frame_id                = frame_id_;
+    magnetic_field_data_.header.frame_id     = frame_id_;
     imu_data_.linear_acceleration_covariance = default_acceleration_covariance;
     imu_data_.angular_velocity_covariance    = default_angular_velocity_covariance;
     imu_data_.orientation_covariance         = default_orientation_covariance;
@@ -207,6 +291,15 @@ void iahrs::SerialBridge::declare_parameters()
 
     // Parameters
     this->declare_parameter<bool>("remove_gravitational_acceleration", false);
-    remove_gravitational_acceleration_ = this->get_parameter(
-        "remove_gravitational_acceleration").as_bool();
+    remove_gravitational_acceleration_ = this->get_parameter("remove_gravitational_acceleration").as_bool();
+
+    // Orientation offset
+    this->declare_parameter<double>("roll_offset_deg", 0.0);
+    roll_offset_deg_ = this->get_parameter("roll_offset_deg").as_double();
+
+    this->declare_parameter<double>("pitch_offset_deg", 0.0);
+    pitch_offset_deg_ = this->get_parameter("pitch_offset_deg").as_double();
+
+    this->declare_parameter<double>("yaw_offset_deg", 0.0);
+    yaw_offset_deg_ = this->get_parameter("yaw_offset_deg").as_double();
 }
